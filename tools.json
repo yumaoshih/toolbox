@@ -2,7 +2,15 @@
   "categories": [
     {
       "id": "media",
-      "name": "媒體工具"
+      "name": "影音工具"
+    },
+    {
+      "id": "image",
+      "name": "圖片與 PDF"
+    },
+    {
+      "id": "text",
+      "name": "文字與資料"
     }
   ],
   "tools": [
@@ -22,10 +30,57 @@
       "icon": "🎬"
     },
     {
+      "id": "video-convert",
+      "name": "影片轉 MP4",
+      "desc": "把 MOV、MKV、AVI 等影片轉成 MP4，或降低解析度與畫質縮小檔案。",
+      "category": "media",
+      "tags": [
+        "影片",
+        "MP4",
+        "MOV",
+        "MKV",
+        "AVI",
+        "壓縮",
+        "轉檔"
+      ],
+      "url": "tools/video-convert/",
+      "icon": "🎞️"
+    },
+    {
+      "id": "video-gif",
+      "name": "影片轉 GIF",
+      "desc": "選一段影片做成 GIF 或 WebP 動圖，可設定開始時間、長度、寬度與 FPS。",
+      "category": "media",
+      "tags": [
+        "GIF",
+        "WebP",
+        "動圖",
+        "影片"
+      ],
+      "url": "tools/video-gif/",
+      "icon": "🌀"
+    },
+    {
+      "id": "audio-extract",
+      "name": "抽出音訊",
+      "desc": "從影片取出 MP3 或 M4A 音訊，支援一次多個檔案。",
+      "category": "media",
+      "tags": [
+        "音訊",
+        "MP3",
+        "M4A",
+        "AAC",
+        "影片",
+        "會議錄影"
+      ],
+      "url": "tools/audio-extract/",
+      "icon": "🎧"
+    },
+    {
       "id": "image-compressor",
       "name": "圖片瘦身站",
       "desc": "批次圖片轉檔與壓縮，全部在瀏覽器本機處理，不會上傳。",
-      "category": "media",
+      "category": "image",
       "tags": [
         "圖片",
         "壓縮",
@@ -36,6 +91,99 @@
       ],
       "url": "https://yumaoshih.github.io/ai-workshop-starters/004_image-compressor/",
       "icon": "🖼️"
+    },
+    {
+      "id": "pdf-images",
+      "name": "PDF 與圖片互轉",
+      "desc": "PDF 每頁轉成 JPG／PNG，或把多張圖片合成一份 PDF。",
+      "category": "image",
+      "tags": [
+        "PDF",
+        "轉圖片",
+        "合併",
+        "掃描",
+        "證件"
+      ],
+      "url": "tools/pdf-images/",
+      "icon": "📄"
+    },
+    {
+      "id": "image-resize",
+      "name": "批次改尺寸與浮水印",
+      "desc": "一次調整多張圖片的尺寸、格式與品質，可加文字浮水印。",
+      "category": "image",
+      "tags": [
+        "圖片",
+        "縮圖",
+        "尺寸",
+        "浮水印",
+        "WebP",
+        "電商",
+        "社群"
+      ],
+      "url": "tools/image-resize/",
+      "icon": "📐"
+    },
+    {
+      "id": "exif-strip",
+      "name": "移除照片 EXIF",
+      "desc": "查看並清除照片裡的 GPS 位置、相機與拍攝時間，畫質不變。",
+      "category": "image",
+      "tags": [
+        "EXIF",
+        "GPS",
+        "隱私",
+        "照片",
+        "中繼資料"
+      ],
+      "url": "tools/exif-strip/",
+      "icon": "🛡️"
+    },
+    {
+      "id": "heic-convert",
+      "name": "HEIC 轉 JPG",
+      "desc": "把 iPhone 的 HEIC 照片批次轉成 JPG 或 PNG。",
+      "category": "image",
+      "tags": [
+        "HEIC",
+        "iPhone",
+        "JPG",
+        "PNG",
+        "轉檔"
+      ],
+      "url": "tools/heic-convert/",
+      "icon": "📱"
+    },
+    {
+      "id": "zh-convert",
+      "name": "繁簡轉換",
+      "desc": "簡繁互轉並換成台灣或香港用詞，即時統計字數。",
+      "category": "text",
+      "tags": [
+        "繁體",
+        "簡體",
+        "OpenCC",
+        "字數",
+        "用詞"
+      ],
+      "url": "tools/zh-convert/",
+      "icon": "🈶"
+    },
+    {
+      "id": "sheet-convert",
+      "name": "CSV、Excel 互轉",
+      "desc": "預覽試算表、篩選去重，匯出 CSV、Excel、TSV、JSON，Big5 不亂碼。",
+      "category": "text",
+      "tags": [
+        "CSV",
+        "Excel",
+        "XLSX",
+        "去重",
+        "Big5",
+        "JSON"
+      ],
+      "url": "tools/sheet-convert/",
+      "icon": "📊"
     }
   ]
 }

@@ -60,6 +60,7 @@
       node.style.animationDelay = Math.min(i, 12) * 25 + 'ms';
       var a = node.querySelector('.card-link');
       a.href = t.url; a.setAttribute('aria-label', t.name + '：' + t.desc);
+      if (!/^https?:\/\//.test(t.url)) { a.removeAttribute('target'); a.removeAttribute('rel'); }
       node.querySelector('.card-icon').textContent = t.icon || '🔧';
       node.querySelector('.card-name').innerHTML = highlight(t.name, state.q);
       node.querySelector('.card-cat').textContent = catName(t.category);

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>影片轉 GIF</title>
+  <meta name="description" content="選一段影片做成 GIF 或 WebP 動圖，可設定開始時間、長度、寬度與 FPS。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .src-preview { margin: 0; border: 0; border-top: 1px solid var(--hairline); border-radius: 0; background: #000; }
+    .src-preview video { max-height: 320px; }
+    .est { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .panel-foot .r-meta { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    #result .preview { background-image: linear-gradient(45deg, var(--canvas-soft-2) 25%, transparent 25%), linear-gradient(-45deg, var(--canvas-soft-2) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--canvas-soft-2) 75%), linear-gradient(-45deg, transparent 75%, var(--canvas-soft-2) 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+    .note { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">影片轉 GIF</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">把一段影片做成 GIF 動圖</h1>
+        <p>播放到想要的畫面，按「從這裡開始」，再選長度和大小。</p>
+      </section>
+
+      <label class="drop" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <strong>拖曳影片到這裡，或點擊選擇</strong>
+        <small>MP4、MOV、MKV、WEBM 等</small>
+        <input id="file-input" type="file" accept="video/*,.mov,.mkv,.avi,.webm,.mp4,.m4v,.flv,.wmv,.3gp,.mts,.ts" aria-label="選擇檔案">
+      </label>
+
+      <section class="panel" id="file-card" hidden>
+        <div class="panel-head">
+          <div><div class="name" id="file-name"></div><div class="meta" id="file-meta"></div></div>
+          <button type="button" class="btn btn-sm" id="btn-change">換一個</button>
+        </div>
+        <div class="preview src-preview"><video id="src-video" controls playsinline muted></video></div>
+      </section>
+
+      <div class="settings" id="settings" hidden>
+        <div class="setting">
+          <span class="title">開始時間<small id="range-hint"></small></span>
+          <button type="button" class="btn btn-sm" id="btn-here">從這裡開始</button>
+          <span class="field"><input type="number" id="start" min="0" step="0.1" value="0" aria-label="開始秒數"><span class="unit">秒</span></span>
+        </div>
+        <div class="setting">
+          <span class="title">長度<small>最長 30 秒</small></span>
+          <span class="field"><input type="number" id="len" min="0.5" max="30" step="0.5" value="5" aria-label="長度秒數"><span class="unit">秒</span></span>
+        </div>
+        <div class="setting">
+          <span class="title">寬度<small>高度依比例自動計算</small></span>
+          <div class="seg-ctl" id="width" role="group" aria-label="寬度"><button type="button" class="chip" data-v="320" aria-pressed="false">320</button><button type="button" class="chip" data-v="480" aria-pressed="true">480</button><button type="button" class="chip" data-v="640" aria-pressed="false">640</button><button type="button" class="chip" data-v="0" aria-pressed="false">原始</button></div>
+        </div>
+        <div class="setting">
+          <span class="title">FPS<small>越高越流暢，檔案也越大</small></span>
+          <div class="seg-ctl" id="fps" role="group" aria-label="FPS"><button type="button" class="chip" data-v="10" aria-pressed="false">10</button><button type="button" class="chip" data-v="15" aria-pressed="true">15</button><button type="button" class="chip" data-v="20" aria-pressed="false">20</button></div>
+        </div>
+        <div class="setting">
+          <span class="title">格式<small>WebP 動圖通常小很多，但部分舊軟體不支援</small></span>
+          <div class="seg-ctl" id="fmt" role="group" aria-label="格式"><button type="button" class="chip" data-v="gif" aria-pressed="true">GIF</button><button type="button" class="chip" data-v="webp" aria-pressed="false">WebP</button></div>
+        </div>
+      </div>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" class="btn btn-primary" id="btn-start">產生動圖</button>
+        <span class="est" id="est"></span>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <section id="progress" hidden>
+        <div class="status"><span class="label" id="status-label"></span><span class="pct" id="status-pct"></span></div>
+        <div class="bar" id="bar"><i></i></div>
+      </section>
+
+      <section class="panel" id="result" hidden>
+        <div class="preview" style="margin:0;border:0;border-radius:0"><img id="r-img" alt="產生的動圖預覽"></div>
+        <div class="panel-foot">
+          <span class="r-meta" id="r-meta"></span>
+          <a class="btn btn-primary btn-sm" id="r-download" style="margin-left:auto">下載</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="../../assets/ffmpeg-kit.js"></script>
+  <script src="../_av/av.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

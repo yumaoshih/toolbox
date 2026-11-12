@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HEIC 轉 JPG</title>
+  <meta name="description" content="把 iPhone 的 HEIC 照片批次轉成 JPG 或 PNG，全部在瀏覽器裡完成，不會上傳。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .num { font-family: var(--font-mono); font-size: 12px; color: var(--mute); min-width: 32px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">HEIC 轉 JPG</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">iPhone 照片轉成到哪都能開的 JPG</h1>
+        <p>HEIC 在 Windows 和很多網站上打不開。選好照片就能批次轉檔，轉出的檔案不含 GPS 等拍攝資訊。</p>
+      </section>
+
+      <label class="drop" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <strong>拖曳 HEIC 照片到這裡，或點擊選擇</strong>
+        <small>.heic、.heif，可多張</small>
+        <input id="file-input" type="file" multiple accept=".heic,.heif,image/heic,image/heif" aria-label="選擇 HEIC 照片">
+      </label>
+
+      <div class="panel" id="picked" hidden>
+        <div class="panel-head">
+          <div><div class="name" id="picked-name"></div><div class="meta" id="picked-meta"></div></div>
+          <button type="button" class="btn btn-sm" id="btn-change">重新選擇</button>
+        </div>
+      </div>
+
+      <div class="settings">
+        <div class="setting">
+          <span class="title">輸出格式<small>JPG 檔案小、相容性最好；PNG 無損但檔案大</small></span>
+          <div class="seg-ctl" role="group" aria-label="輸出格式" id="fmt">
+            <button type="button" class="chip" data-v="jpg" aria-pressed="true">JPG</button>
+            <button type="button" class="chip" data-v="png" aria-pressed="false">PNG</button>
+          </div>
+        </div>
+        <div class="setting" id="quality-row">
+          <label class="title" for="quality">品質</label>
+          <input id="quality" type="range" min="50" max="100" step="1" value="90">
+          <span class="num" id="quality-val">90</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="btn-start" disabled>開始轉檔</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="btn-zip" hidden>全部下載（ZIP）</button>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <section id="progress" hidden>
+        <div class="status"><span class="label" id="status-label"></span><span class="pct" id="status-pct"></span></div>
+        <div class="bar" id="bar"><i></i></div>
+      </section>
+
+      <ol class="rows" id="rows" hidden></ol>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

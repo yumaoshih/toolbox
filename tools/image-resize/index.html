@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>批次改尺寸與浮水印</title>
+  <meta name="description" content="一次調整多張圖片的尺寸、格式與品質，可加上文字浮水印，全部在瀏覽器裡完成。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .layout { display: grid; gap: var(--s-lg); }
+    .layout.has-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 300px); align-items: start; }
+    .layout .settings { margin-top: var(--s-md); }
+    .num { font-family: var(--font-mono); font-size: 12px; color: var(--mute); min-width: 40px; text-align: right; }
+    .live { margin: var(--s-md) 0 0; position: sticky; top: 16px; }
+    .live canvas { width: 100%; height: auto; display: block; border: 1px solid var(--hairline); border-radius: var(--r-md); background:
+      repeating-conic-gradient(var(--canvas-soft-2) 0 25%, var(--canvas) 0 50%) 50% / 16px 16px; }
+    .live figcaption { margin-top: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .swatch { width: 32px; padding: 0; display: grid; place-items: center; }
+    .swatch i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--hairline-strong); display: block; }
+    .swatch[aria-pressed="true"] { background: var(--canvas-soft-2); box-shadow: inset 0 0 0 1px var(--ink); }
+    @media (max-width: 760px) { .layout.has-preview { grid-template-columns: 1fr; } .live { position: static; order: -1; } }
+  </style>
+</head>
+<body>
+  <div class="shell is-wide">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">批次改尺寸與浮水印</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">批次改尺寸，順便加浮水印</h1>
+        <p>社群貼文、電商商品圖一次處理完。圖片不會上傳，在你的瀏覽器裡完成。</p>
+      </section>
+
+      <label class="drop" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <strong>拖曳圖片到這裡，或點擊選擇</strong>
+        <small>JPG、PNG、WebP、GIF（取第一格），可多張</small>
+        <input id="file-input" type="file" multiple accept="image/*" aria-label="選擇圖片">
+      </label>
+
+      <div class="panel" id="picked" hidden>
+        <div class="panel-head">
+          <div><div class="name" id="picked-name"></div><div class="meta" id="picked-meta"></div></div>
+          <button type="button" class="btn btn-sm" id="btn-change">重新選擇</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="settings">
+          <div class="setting">
+            <span class="title">調整方式<small>比目標小的圖片不會被放大</small></span>
+            <div class="seg-ctl" role="group" aria-label="調整方式" id="mode">
+              <button type="button" class="chip" data-v="long" aria-pressed="true">最長邊</button>
+              <button type="button" class="chip" data-v="width" aria-pressed="false">寬度</button>
+              <button type="button" class="chip" data-v="height" aria-pressed="false">高度</button>
+              <button type="button" class="chip" data-v="percent" aria-pressed="false">百分比</button>
+            </div>
+            <div class="field" id="size-wrap"><input id="size" type="number" min="1" max="20000" step="1" value="1600" aria-label="目標大小"><span class="unit" id="size-unit">px</span></div>
+          </div>
+          <div class="setting">
+            <span class="title">輸出格式</span>
+            <div class="seg-ctl" role="group" aria-label="輸出格式" id="fmt">
+              <button type="button" class="chip" data-v="same" aria-pressed="true">原格式</button>
+              <button type="button" class="chip" data-v="jpg" aria-pressed="false">JPG</button>
+              <button type="button" class="chip" data-v="webp" aria-pressed="false">WebP</button>
+              <button type="button" class="chip" data-v="png" aria-pressed="false">PNG</button>
+            </div>
+          </div>
+          <div class="setting" id="quality-row">
+            <label class="title" for="quality">品質<small>PNG 為無損，不受此設定影響</small></label>
+            <input id="quality" type="range" min="50" max="100" step="1" value="85">
+            <span class="num" id="quality-val">85</span>
+          </div>
+          <div class="setting">
+            <label class="title" for="wm-on">文字浮水印</label>
+            <label class="toggle"><input id="wm-on" type="checkbox"> 加上浮水印</label>
+          </div>
+          <div id="wm-opts" hidden>
+            <div class="setting">
+              <label class="title" for="wm-text">文字</label>
+              <div class="field"><input id="wm-text" type="text" maxlength="60" value="© 我的品牌"></div>
+            </div>
+            <div class="setting">
+              <span class="title">位置</span>
+              <div class="seg-ctl" role="group" aria-label="浮水印位置" id="wm-pos">
+                <button type="button" class="chip" data-v="tl" aria-pressed="false">左上</button>
+                <button type="button" class="chip" data-v="tr" aria-pressed="false">右上</button>
+                <button type="button" class="chip" data-v="c" aria-pressed="false">置中</button>
+                <button type="button" class="chip" data-v="bl" aria-pressed="false">左下</button>
+                <button type="button" class="chip" data-v="br" aria-pressed="true">右下</button>
+                <button type="button" class="chip" data-v="tile" aria-pressed="false">平鋪</button>
+              </div>
+            </div>
+            <div class="setting">
+              <label class="title" for="wm-size">大小</label>
+              <input id="wm-size" type="range" min="2" max="15" step="0.5" value="4">
+              <span class="num" id="wm-size-val">4%</span>
+            </div>
+            <div class="setting">
+              <label class="title" for="wm-alpha">透明度</label>
+              <input id="wm-alpha" type="range" min="10" max="100" step="5" value="60">
+              <span class="num" id="wm-alpha-val">60%</span>
+            </div>
+            <div class="setting">
+              <label class="title" for="wm-color">顏色</label>
+              <div class="seg-ctl" role="group" aria-label="快速顏色" id="wm-swatch">
+                <button type="button" class="chip swatch" data-v="#ffffff" aria-pressed="true" aria-label="白色"><i style="background:#fff"></i></button>
+                <button type="button" class="chip swatch" data-v="#000000" aria-pressed="false" aria-label="黑色"><i style="background:#000"></i></button>
+              </div>
+              <input id="wm-color" type="color" value="#ffffff" aria-label="自訂顏色">
+            </div>
+          </div>
+        </div>
+
+        <figure class="live" id="live" hidden>
+          <canvas id="preview" aria-label="第一張圖片的處理預覽"></canvas>
+          <figcaption id="preview-cap"></figcaption>
+        </figure>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="btn-start" disabled>開始處理</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="btn-zip" hidden>全部下載（ZIP）</button>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <section id="progress" hidden>
+        <div class="status"><span class="label" id="status-label"></span><span class="pct" id="status-pct"></span></div>
+        <div class="bar" id="bar"><i></i></div>
+      </section>
+
+      <ol class="rows" id="rows" hidden></ol>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

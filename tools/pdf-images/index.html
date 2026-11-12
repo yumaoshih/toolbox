@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF 與圖片互轉</title>
+  <meta name="description" content="PDF 轉成 PNG／JPG 圖片，或把多張圖片合成一份 PDF，全部在瀏覽器裡完成。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .modes { margin-bottom: var(--s-md); }
+    .thumbs { list-style: none; margin: var(--s-md) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s-sm); }
+    .thumb-card { border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: hidden; background: var(--canvas); animation: rise var(--dur) var(--ease); }
+    .thumb-card .pic { aspect-ratio: 3 / 4; background: var(--canvas-soft-2); display: grid; place-items: center; overflow: hidden; }
+    .thumb-card .pic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .thumb-card .cap { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 10px; font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .thumb-card .cap .btn { height: 26px; padding: 0 10px; font-size: 12px; }
+    .row.is-dragging { opacity: .4; }
+    .row.is-drop-target { box-shadow: inset 0 2px 0 var(--link); }
+    .row .handle { cursor: grab; color: var(--mute); font-family: var(--font-mono); font-size: 12px; min-width: 24px; user-select: none; }
+    .row .tools { display: flex; gap: 4px; }
+    .icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--canvas); display: grid; place-items: center; padding: 0; color: var(--body); }
+    .icon-btn:hover { border-color: var(--hairline-strong); color: var(--ink); }
+    .icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .row { grid-template-columns: auto auto 1fr auto; }
+    @media (max-width: 560px) { .row { grid-template-columns: auto auto 1fr; } .row .tools { grid-column: 3; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">PDF 與圖片互轉</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">PDF 與圖片互轉</h1>
+        <p>把 PDF 每一頁存成圖片，或把多張照片、掃描檔合成一份 PDF。</p>
+      </section>
+
+      <div class="seg-ctl modes" role="tablist" aria-label="轉換方向">
+        <button type="button" class="chip" role="tab" id="tab-p2i" aria-selected="true" aria-controls="mode-p2i">PDF 轉圖片</button>
+        <button type="button" class="chip" role="tab" id="tab-i2p" aria-selected="false" aria-controls="mode-i2p">圖片轉 PDF</button>
+      </div>
+
+      <!-- ── PDF 轉圖片 ── -->
+      <section id="mode-p2i" role="tabpanel" aria-labelledby="tab-p2i">
+        <label class="drop" id="p-drop" for="p-input" tabindex="0">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+          <strong>拖曳 PDF 到這裡，或點擊選擇</strong>
+          <small>一次一份 PDF</small>
+          <input id="p-input" type="file" accept="application/pdf,.pdf" aria-label="選擇 PDF">
+        </label>
+
+        <div class="panel" id="p-file" hidden>
+          <div class="panel-head">
+            <div><div class="name" id="p-name"></div><div class="meta" id="p-meta"></div></div>
+            <button type="button" class="btn btn-sm" id="p-change">換一份</button>
+          </div>
+        </div>
+
+        <div class="settings">
+          <div class="setting">
+            <span class="title">解析度<small>150 DPI 適合螢幕閱讀，300 DPI 適合列印</small></span>
+            <div class="seg-ctl" role="group" aria-label="解析度" id="p-dpi">
+              <button type="button" class="chip" data-v="72" aria-pressed="false">72</button>
+              <button type="button" class="chip" data-v="150" aria-pressed="true">150</button>
+              <button type="button" class="chip" data-v="300" aria-pressed="false">300 DPI</button>
+            </div>
+          </div>
+          <div class="setting">
+            <span class="title">格式<small>JPG 檔案小，PNG 文字邊緣最清晰</small></span>
+            <div class="seg-ctl" role="group" aria-label="格式" id="p-fmt">
+              <button type="button" class="chip" data-v="jpg" aria-pressed="true">JPG</button>
+              <button type="button" class="chip" data-v="png" aria-pressed="false">PNG</button>
+            </div>
+          </div>
+          <div class="setting">
+            <label class="title" for="p-range">頁碼<small>留空代表全部，例如 1-3, 5</small></label>
+            <div class="field"><input id="p-range" type="text" placeholder="全部" autocomplete="off"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="p-start" disabled>轉成圖片</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="p-zip" hidden>全部下載（ZIP）</button>
+        </div>
+        <div class="note note-error" id="p-error" role="alert" hidden></div>
+        <section id="p-progress" hidden>
+          <div class="status"><span class="label" id="p-label"></span><span class="pct" id="p-pct"></span></div>
+          <div class="bar" id="p-bar"><i></i></div>
+        </section>
+        <ul class="thumbs" id="p-thumbs" hidden></ul>
+      </section>
+
+      <!-- ── 圖片轉 PDF ── -->
+      <section id="mode-i2p" role="tabpanel" aria-labelledby="tab-i2p" hidden>
+        <label class="drop" id="i-drop" for="i-input" tabindex="0">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+          <strong>拖曳圖片到這裡，或點擊選擇</strong>
+          <small>JPG、PNG、WebP，可多張，可再追加</small>
+          <input id="i-input" type="file" multiple accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" aria-label="選擇圖片">
+        </label>
+
+        <ol class="rows" id="i-rows" hidden></ol>
+
+        <div class="settings">
+          <div class="setting">
+            <span class="title">頁面尺寸<small>A4 會依圖片方向自動選直式或橫式</small></span>
+            <div class="seg-ctl" role="group" aria-label="頁面尺寸" id="i-size">
+              <button type="button" class="chip" data-v="a4" aria-pressed="true">A4</button>
+              <button type="button" class="chip" data-v="fit" aria-pressed="false">依圖片原尺寸</button>
+            </div>
+          </div>
+          <div class="setting">
+            <span class="title">邊界</span>
+            <div class="seg-ctl" role="group" aria-label="邊界" id="i-margin">
+              <button type="button" class="chip" data-v="0" aria-pressed="false">無</button>
+              <button type="button" class="chip" data-v="18" aria-pressed="true">窄</button>
+              <button type="button" class="chip" data-v="36" aria-pressed="false">一般</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="i-start" disabled>產生 PDF</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="i-clear" hidden>清空</button>
+        </div>
+        <div class="note note-error" id="i-error" role="alert" hidden></div>
+        <section id="i-progress" hidden>
+          <div class="status"><span class="label" id="i-label"></span><span class="pct" id="i-pct"></span></div>
+          <div class="bar" id="i-bar"><i></i></div>
+        </section>
+        <div class="note note-info" id="i-done" hidden></div>
+      </section>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

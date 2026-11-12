@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>影片轉 MP4</title>
+  <meta name="description" content="把 MOV、MKV、AVI 等影片轉成 MP4，或降低解析度與畫質縮小檔案。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .stats { border: 0; border-radius: 0; }
+    .panel-foot .r-name { font-size: 14px; font-weight: 500; word-break: break-all; }
+    #r-diff.is-down { color: var(--success); }
+    #r-diff.is-up { color: var(--warning-deep); }
+    .note { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">影片轉 MP4</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">把影片轉成 MP4，或壓小一點</h1>
+        <p>支援 MOV、MKV、AVI、WEBM 等格式。重新編碼需要時間，適合 5 分鐘以內的短片。</p>
+      </section>
+
+      <label class="drop" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <strong>拖曳影片到這裡，或點擊選擇</strong>
+        <small>MOV、MKV、AVI、WEBM、MP4</small>
+        <input id="file-input" type="file" accept="video/*,.mov,.mkv,.avi,.webm,.mp4,.m4v,.flv,.wmv,.3gp,.mts,.ts" aria-label="選擇檔案">
+      </label>
+
+      <section class="panel" id="file-card" hidden>
+        <div class="panel-head">
+          <div><div class="name" id="file-name"></div><div class="meta" id="file-meta"></div></div>
+          <button type="button" class="btn btn-sm" id="btn-change">換一個</button>
+        </div>
+      </section>
+
+      <div class="settings" id="settings" hidden>
+        <div class="setting">
+          <span class="title">畫質<small>數字越小檔案越大、越清晰</small></span>
+          <div class="seg-ctl" id="q" role="group" aria-label="畫質"><button type="button" class="chip" data-v="high" aria-pressed="false">高畫質</button><button type="button" class="chip" data-v="balanced" aria-pressed="true">平衡</button><button type="button" class="chip" data-v="small" aria-pressed="false">小檔案</button></div>
+        </div>
+        <div class="setting">
+          <span class="title">解析度<small>只會縮小，不會放大</small></span>
+          <div class="seg-ctl" id="res" role="group" aria-label="解析度"><button type="button" class="chip" data-v="0" aria-pressed="true">原始</button><button type="button" class="chip" data-v="1080" aria-pressed="false">1080p</button><button type="button" class="chip" data-v="720" aria-pressed="false">720p</button><button type="button" class="chip" data-v="480" aria-pressed="false">480p</button></div>
+        </div>
+        <div class="setting">
+          <span class="title">音訊</span>
+          <div class="seg-ctl" id="audio" role="group" aria-label="音訊"><button type="button" class="chip" data-v="keep" aria-pressed="true">保留</button><button type="button" class="chip" data-v="drop" aria-pressed="false">移除</button></div>
+        </div>
+        <div class="setting" id="remux-row" hidden>
+          <span class="title">只換容器，不重新編碼<small>來源已是 H.264＋AAC，幾秒就能完成，畫質完全不變</small></span>
+          <label class="toggle"><input type="checkbox" id="remux" checked>使用</label>
+        </div>
+      </div>
+
+      <div class="note note-warn" id="note-long" hidden></div>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" class="btn btn-primary" id="btn-start">開始轉檔</button>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <section id="progress" hidden>
+        <div class="status"><span class="label" id="status-label"></span><span class="pct" id="status-pct"></span></div>
+        <div class="bar" id="bar"><i></i></div>
+      </section>
+
+      <section class="panel" id="result" hidden>
+        <div class="stats">
+          <div class="stat"><div class="k">原始大小</div><div class="v" id="r-before"></div></div>
+          <div class="stat"><div class="k">輸出大小</div><div class="v" id="r-after"></div></div>
+          <div class="stat"><div class="k">變化</div><div class="v" id="r-diff"></div></div>
+          <div class="stat"><div class="k">耗時</div><div class="v" id="r-time"></div></div>
+        </div>
+        <div class="panel-foot">
+          <span class="r-name" id="r-name"></span>
+          <a class="btn btn-primary btn-sm" id="r-download" style="margin-left:auto">下載 MP4</a>
+        </div>
+        <div class="preview" style="margin:0;border:0;border-top:1px solid var(--hairline);border-radius:0"><video id="r-video" controls playsinline></video></div>
+      </section>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="../../assets/ffmpeg-kit.js"></script>
+  <script src="../_av/av.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

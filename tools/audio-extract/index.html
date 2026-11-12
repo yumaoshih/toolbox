@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>抽出音訊</title>
+  <meta name="description" content="從影片取出 MP3 或 M4A 音訊，支援一次多個檔案。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .row .thumb { font-size: 16px; }
+    .note { white-space: pre-wrap; }
+    .row .r-err { color: var(--error-deep); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">抽出音訊</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">從影片取出聲音</h1>
+        <p>會議錄影、課程影片只需要聲音時，直接存成 MP3 或 M4A。可一次放多個檔案。</p>
+      </section>
+
+      <label class="drop" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <strong>拖曳影片到這裡，或點擊選擇（可多選）</strong>
+        <small>MP4、MOV、MKV、WEBM、AVI，也可放音訊檔轉格式</small>
+        <input id="file-input" type="file" accept="video/*,.mov,.mkv,.avi,.webm,.mp4,.m4v,.flv,.wmv,.3gp,.mts,.ts,audio/*" multiple aria-label="選擇檔案">
+      </label>
+
+      <div class="settings">
+        <div class="setting">
+          <span class="title">格式<small>M4A 在來源已是 AAC 時直接複製，不損失音質</small></span>
+          <div class="seg-ctl" id="fmt" role="group" aria-label="格式"><button type="button" class="chip" data-v="mp3" aria-pressed="true">MP3</button><button type="button" class="chip" data-v="m4a" aria-pressed="false">M4A</button></div>
+        </div>
+        <div class="setting">
+          <span class="title">位元率<small>越高音質越好、檔案越大</small></span>
+          <div class="seg-ctl" id="kbps" role="group" aria-label="位元率"><button type="button" class="chip" data-v="128" aria-pressed="false">128 kbps</button><button type="button" class="chip" data-v="192" aria-pressed="true">192 kbps</button><button type="button" class="chip" data-v="320" aria-pressed="false">320 kbps</button></div>
+        </div>
+      </div>
+
+      <div class="actions" id="actions" hidden>
+        <button type="button" class="btn btn-primary" id="btn-start">開始抽出</button>
+        <button type="button" class="btn" id="btn-clear">清空</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="btn-zip" hidden>全部下載（ZIP）</button>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <section id="progress" hidden>
+        <div class="status"><span class="label" id="status-label"></span><span class="pct" id="status-pct"></span></div>
+        <div class="bar" id="bar"><i></i></div>
+      </section>
+
+      <ol class="rows" id="rows" hidden></ol>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="../../assets/ffmpeg-kit.js"></script>
+  <script src="../_av/av.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

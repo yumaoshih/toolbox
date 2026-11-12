@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>繁簡轉換</title>
+  <meta name="description" content="簡體與繁體中文互轉，自動換成台灣或香港用詞，並即時統計字數。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .modes { display: flex; gap: 4px; flex-wrap: wrap; }
+    .panes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-md); margin-top: var(--s-md); }
+    .pane { display: flex; flex-direction: column; min-width: 0; }
+    .pane-head { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 8px; }
+    .pane-head .label { font-size: 14px; font-weight: 500; letter-spacing: -0.28px; margin-right: auto; display: flex; align-items: center; gap: 8px; }
+    .pane-head .tag { font-family: var(--font-mono); font-size: 11px; font-weight: 400; color: var(--mute); padding: 0 8px; border-radius: var(--r-pill); background: var(--canvas-soft-2); line-height: 20px; }
+    .pane-head .tag.is-hot { color: var(--on-primary); background: linear-gradient(90deg, var(--grad-a), var(--grad-b)); }
+    .upload { position: relative; overflow: hidden; }
+    .upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .box { position: relative; }
+    textarea.text {
+      width: 100%; min-height: 320px; resize: vertical; padding: 14px 16px;
+      border: 1px solid var(--hairline); border-radius: var(--r-md); background: var(--canvas);
+      font-size: 15px; line-height: 26px; outline: none; display: block;
+      transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+    }
+    textarea.text:focus { border-color: var(--hairline-strong); box-shadow: 0 0 0 3px var(--canvas-soft-2); }
+    textarea.text[readonly] { background: var(--canvas-soft); }
+    .box.is-over textarea.text { border-color: var(--link); border-style: dashed; }
+    .pane .stats { margin-top: 8px; grid-template-columns: repeat(4, 1fr); }
+    .pane .stat { padding: 8px 12px; }
+    .pane .stat .v { font-size: 16px; line-height: 22px; }
+    .enc { font-size: 12px; color: var(--mute); margin-top: 6px; min-height: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .enc select { font-size: 12px; border: 1px solid var(--hairline); border-radius: var(--r-sm); background: var(--canvas); padding: 2px 6px; }
+    @media (max-width: 760px) {
+      .panes { grid-template-columns: 1fr; }
+      textarea.text { min-height: 200px; }
+    }
+    @media (max-width: 420px) { .pane .stats { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+  <div class="shell is-wide">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">繁簡轉換</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">簡體、繁體一鍵互轉</h1>
+        <p>不只換字，也會換成當地用詞，例如「軟件」變「軟體」、「打印機」變「印表機」。貼上文字就即時轉換。</p>
+      </section>
+
+      <div class="modes" id="modes" role="group" aria-label="轉換方向">
+        <button type="button" class="chip" data-from="cn" data-to="twp" aria-pressed="true">簡體 → 繁體（台灣用詞）</button>
+        <button type="button" class="chip" data-from="twp" data-to="cn" aria-pressed="false">繁體 → 簡體</button>
+        <button type="button" class="chip" data-from="cn" data-to="hk" aria-pressed="false">簡體 → 繁體（香港）</button>
+        <button type="button" class="chip" data-from="hk" data-to="twp" aria-pressed="false">香港繁體 → 台灣繁體</button>
+      </div>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+
+      <div class="panes">
+        <section class="pane" aria-labelledby="in-label">
+          <div class="pane-head">
+            <span class="label" id="in-label">原文</span>
+            <span class="btn btn-sm upload">上傳 .txt<input type="file" id="file-input" accept=".txt,text/plain" aria-label="上傳文字檔"></span>
+            <button type="button" class="btn btn-sm" id="btn-clear">清除</button>
+          </div>
+          <div class="box" id="in-box">
+            <textarea class="text" id="input" spellcheck="false" placeholder="在這裡貼上文字，或把 .txt 檔拖進來"></textarea>
+          </div>
+          <div class="enc" id="enc" hidden>
+            <span id="enc-text"></span>
+            <label>改用 <select id="enc-select" aria-label="改用其他編碼重新讀取"><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="gbk">GBK</option></select></label>
+          </div>
+          <div class="stats" id="in-stats"><div class="stat"><div class="k">字元（含空白）</div><div class="v" data-k="chars">0</div></div><div class="stat"><div class="k">字元（不含空白）</div><div class="v" data-k="nospace">0</div></div><div class="stat"><div class="k">中文字</div><div class="v" data-k="han">0</div></div><div class="stat"><div class="k">英文單字</div><div class="v" data-k="words">0</div></div><div class="stat"><div class="k">數字</div><div class="v" data-k="nums">0</div></div><div class="stat"><div class="k">標點</div><div class="v" data-k="punct">0</div></div><div class="stat"><div class="k">行數</div><div class="v" data-k="lines">0</div></div><div class="stat"><div class="k">段落</div><div class="v" data-k="paras">0</div></div></div>
+        </section>
+
+        <section class="pane" aria-labelledby="out-label">
+          <div class="pane-head">
+            <span class="label" id="out-label">轉換結果 <span class="tag" id="changed">變動 0 字</span></span>
+            <button type="button" class="btn btn-sm" id="btn-copy" disabled>複製</button>
+            <button type="button" class="btn btn-sm" id="btn-download" disabled>下載 .txt</button>
+          </div>
+          <div class="box">
+            <textarea class="text" id="output" readonly spellcheck="false" placeholder="轉換引擎載入中…"></textarea>
+          </div>
+          <div class="enc"></div>
+          <div class="stats" id="out-stats"><div class="stat"><div class="k">字元（含空白）</div><div class="v" data-k="chars">0</div></div><div class="stat"><div class="k">字元（不含空白）</div><div class="v" data-k="nospace">0</div></div><div class="stat"><div class="k">中文字</div><div class="v" data-k="han">0</div></div><div class="stat"><div class="k">英文單字</div><div class="v" data-k="words">0</div></div><div class="stat"><div class="k">數字</div><div class="v" data-k="nums">0</div></div><div class="stat"><div class="k">標點</div><div class="v" data-k="punct">0</div></div><div class="stat"><div class="k">行數</div><div class="v" data-k="lines">0</div></div><div class="stat"><div class="k">段落</div><div class="v" data-k="paras">0</div></div></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

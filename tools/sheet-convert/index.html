@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSV、Excel 互轉</title>
+  <meta name="description" content="CSV、Excel 互轉與預覽，可篩選、去重，Big5 檔案不亂碼。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/base.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    .file-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .file-ctl .field { height: 32px; }
+    .file-ctl .field select { font-size: 13px; }
+    .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
+    .tools-row .field.search { flex: 1; min-width: 200px; }
+    .tools-row .field.search input { width: 100%; }
+    .cols { display: flex; flex-wrap: wrap; gap: 6px 14px; width: 100%; padding-top: 4px; }
+    .cols .toggle { font-size: 13px; }
+    .summary { font-size: 14px; color: var(--body); letter-spacing: -0.28px; }
+    .summary b { color: var(--ink); font-weight: 600; font-family: var(--font-mono); }
+    .summary .minus { color: var(--warning-deep); }
+    .table-wrap { margin-top: var(--s-md); border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: auto; max-height: 560px; background: var(--canvas); }
+    table.grid { border-collapse: separate; border-spacing: 0; font-size: 13px; line-height: 18px; min-width: 100%; }
+    table.grid th, table.grid td { padding: 7px 12px; border-bottom: 1px solid var(--hairline); border-right: 1px solid var(--hairline); text-align: left; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+    table.grid th { position: sticky; top: 0; z-index: 1; background: var(--canvas-soft); font-weight: 500; color: var(--ink); }
+    table.grid th.rn, table.grid td.rn { position: sticky; left: 0; background: var(--canvas-soft); color: var(--mute); font-family: var(--font-mono); font-size: 11px; text-align: right; min-width: 44px; }
+    table.grid th.rn { z-index: 2; }
+    table.grid tr:hover td { background: var(--canvas-soft); }
+    table.grid td.empty { color: var(--hairline-strong); }
+    .more { padding: 10px 12px; font-size: 12px; color: var(--mute); border-top: 1px solid var(--hairline); background: var(--canvas-soft); position: sticky; left: 0; }
+    .export { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .export .lead { font-size: 14px; color: var(--body); margin-right: auto; }
+    .export .lead b { color: var(--ink); font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+  <div class="shell is-wide">
+    <header class="top">
+      <a class="back" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <span class="here">CSV、Excel 互轉</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="h">
+        <h1 id="h">打開試算表，整理好再轉成需要的格式</h1>
+        <p>讀取 CSV、Excel、ODS，可以篩選、去除重複，再匯出成 CSV、Excel、TSV 或 JSON。Big5 編碼的舊 CSV 也不會亂碼。</p>
+      </section>
+
+      <label class="drop is-compact" id="drop" for="file-input" tabindex="0">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span>
+        <span><strong id="drop-title">拖曳試算表到這裡，或點擊選擇</strong><br><small>CSV、TSV、XLSX、XLS、ODS</small></span>
+        <input id="file-input" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm,.ods" aria-label="選擇試算表檔案">
+      </label>
+
+      <div class="note note-error" id="note-error" role="alert" hidden></div>
+      <div class="note note-info" id="note-loading" hidden>正在載入試算表引擎…</div>
+
+      <section class="panel" id="panel" hidden>
+        <div class="panel-head">
+          <div>
+            <div class="name" id="file-name"></div>
+            <div class="meta" id="file-meta"></div>
+          </div>
+          <div class="file-ctl">
+            <span class="field" id="sheet-wrap" hidden><select id="sheet-select" aria-label="工作表"></select></span>
+            <span class="field" id="enc-wrap" hidden><select id="enc-select" aria-label="文字編碼"><option value="utf-8">UTF-8</option><option value="big5">Big5</option><option value="gbk">GBK</option></select></span>
+          </div>
+        </div>
+
+        <div class="settings" style="margin: 0; padding: 0 var(--s-lg);">
+          <div class="setting">
+            <span class="title">整理</span>
+            <label class="toggle"><input type="checkbox" id="opt-header" checked>第一列是標題</label>
+            <label class="toggle"><input type="checkbox" id="opt-trim" checked>修剪前後空白</label>
+            <label class="toggle"><input type="checkbox" id="opt-empty" checked>移除空白列</label>
+          </div>
+          <div class="setting">
+            <span class="title">去除重複</span>
+            <div class="seg-ctl" id="dedupe-mode" role="group" aria-label="去除重複">
+              <button type="button" class="chip" data-mode="off" aria-pressed="true">不處理</button>
+              <button type="button" class="chip" data-mode="all" aria-pressed="false">整列相同</button>
+              <button type="button" class="chip" data-mode="cols" aria-pressed="false">指定欄位相同</button>
+            </div>
+            <div class="cols" id="dedupe-cols" hidden></div>
+          </div>
+          <div class="setting">
+            <div class="tools-row">
+              <span class="field search"><input type="text" id="search" placeholder="搜尋內容" aria-label="搜尋內容"></span>
+              <span class="field"><select id="search-col" aria-label="搜尋欄位"></select></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-foot">
+          <span class="summary" id="summary"></span>
+        </div>
+      </section>
+
+      <div class="table-wrap" id="table-wrap" hidden>
+        <table class="grid" id="table"><thead></thead><tbody></tbody></table>
+        <div class="more" id="more" hidden></div>
+      </div>
+
+      <section class="actions export" id="export" hidden>
+        <span class="lead" id="export-lead"></span>
+        <label class="toggle" title="以 = + - @ 開頭的儲存格前面加上單引號，避免在 Excel 被當成公式執行"><input type="checkbox" id="opt-safe" checked>防公式注入</label>
+        <button type="button" class="btn btn-primary" data-fmt="csv">下載 CSV</button>
+        <button type="button" class="btn" data-fmt="xlsx">Excel</button>
+        <button type="button" class="btn" data-fmt="tsv">TSV</button>
+        <button type="button" class="btn" data-fmt="json">JSON</button>
+      </section>
+    </main>
+
+    <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
+  </div>
+
+  <script src="../../assets/kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
