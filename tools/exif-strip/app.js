@@ -57,7 +57,7 @@
     var meta = Kit.fmtBytes(it.file.size) + (it.result ? ' → <b>' + Kit.fmtBytes(it.result.blob.size) + '</b>' : '');
     var right = it.result ? '<button type="button" class="btn btn-sm" data-dl="' + it.id + '">下載</button>'
       : it.busy ? '<span class="spin" aria-hidden="true"></span>' : '';
-    it.el.innerHTML = (it.thumb ? '<img class="thumb" alt="" src="' + it.thumb + '">' : '<span class="thumb">' + Kit.escapeHtml((Kit.extOf(it.file.name) || '?').toUpperCase()) + '</span>') +
+    it.el.innerHTML = (it.thumb ? '<img class="thumb zoomable" title="點擊放大" data-view="' + it.id + '" alt="" src="' + it.thumb + '">' : '<span class="thumb">' + Kit.escapeHtml((Kit.extOf(it.file.name) || '?').toUpperCase()) + '</span>') +
       '<span><div class="r-name">' + Kit.escapeHtml(it.file.name) + '</div><div class="r-meta">' + meta + '</div><div class="tags">' + tags + '</div></span>' +
       '<span class="r-state">' + right + '</span>';
   }
@@ -184,6 +184,13 @@
   $('btn-start').addEventListener('click', run);
   $('btn-zip').addEventListener('click', zipAll);
   $('rows').addEventListener('click', function (e) {
+    var v = e.target.closest('[data-view]');
+    if (v) {
+      var item = state.items.filter(function (x) { return x.id === +v.dataset.view; })[0];
+      if (!item) return;
+      return Kit.viewer.open({ title: item.file.name, cap: item.result ? '已清除中繼資料 · 畫質與原圖相同' : '原圖', url: item.thumb,
+        onDownload: item.result ? function () { Kit.download(item.result.blob, item.file.name); } : null });
+    }
     var b = e.target.closest('[data-dl]'); if (!b) return;
     var it = state.items.filter(function (x) { return x.id === +b.dataset.dl; })[0];
     if (it && it.result) Kit.download(it.result.blob, it.file.name);

@@ -19,7 +19,7 @@
     return { get: get, set: set, setDisabled: function (d) { el.querySelectorAll('.chip').forEach(function (c) { c.disabled = d; }); } };
   }
 
-  var state = { files: [], results: [], busy: false, previewBmp: null, previewIdx: 0, previewQueued: false, viewerUrl: null };
+  var state = { files: [], results: [], busy: false, previewBmp: null, previewIdx: 0, previewQueued: false };
   var prog = Kit.progress($('bar'), $('status-pct'));
   var ui = {
     mode: chipGroup($('mode'), onModeChange),
@@ -147,24 +147,8 @@
     }).catch(function (err) { Kit.showNote($('note-error'), file.name + '：' + err.message); });
   }
 
-  /* ── 全尺寸檢視 ── */
-  function openViewer(v) {
-    closeViewerUrl();
-    state.viewerUrl = v.ownUrl ? v.url : null;
-    $('viewer-title').textContent = v.title;
-    $('viewer-cap').textContent = v.cap;
-    $('viewer-img').src = v.url;
-    $('viewer-body').classList.remove('is-actual');
-    $('viewer-fit').textContent = '實際尺寸';
-    $('viewer-dl').hidden = !v.onDownload;
-    $('viewer-dl').onclick = v.onDownload || null;
-    $('viewer').showModal();
-  }
-  function closeViewerUrl() { if (state.viewerUrl) { URL.revokeObjectURL(state.viewerUrl); state.viewerUrl = null; } }
-  function toggleActual() {
-    var on = $('viewer-body').classList.toggle('is-actual');
-    $('viewer-fit').textContent = on ? '符合視窗' : '實際尺寸';
-  }
+  /* ── 全尺寸檢視（共用 Kit.viewer） ── */
+  function openViewer(v) { Kit.viewer.open(v); }
   function zoomPreview() {
     if (!state.previewBmp) return;
     $('preview').toBlob(function (b) {
@@ -299,11 +283,6 @@
   $('next').addEventListener('click', function () { showPreview(state.previewIdx + 1); });
   $('stage').addEventListener('click', zoomPreview);
   $('btn-zoom').addEventListener('click', zoomPreview);
-  $('viewer-fit').addEventListener('click', toggleActual);
-  $('viewer-img').addEventListener('click', toggleActual);
-  $('viewer-close').addEventListener('click', function () { $('viewer').close(); });
-  $('viewer').addEventListener('close', closeViewerUrl);
-  $('viewer').addEventListener('click', function (e) { if (e.target === $('viewer')) $('viewer').close(); });
 
   window.__imageResize = { state: state, pickFiles: pickFiles, run: run, readOpts: readOpts };
 })();

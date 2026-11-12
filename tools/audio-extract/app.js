@@ -18,7 +18,8 @@
     els.rows.innerHTML = state.items.map(function (it, i) {
       return '<li class="row" id="row-' + i + '">' +
         '<span class="thumb">' + NOTE_ICON + '</span>' +
-        '<span><div class="r-name">' + Kit.escapeHtml(it.file.name) + '</div><div class="r-meta">' + rowMeta(it) + '</div></span>' +
+        '<span><div class="r-name">' + Kit.escapeHtml(it.file.name) + '</div><div class="r-meta">' + rowMeta(it) + '</div>' +
+        (it.url ? '<audio class="r-audio" controls preload="metadata" src="' + it.url + '"></audio>' : '') + '</span>' +
         '<span class="r-state">' + rowState(it, i) + '</span></li>';
     }).join('');
     var done = state.items.filter(function (it) { return it.blob; });

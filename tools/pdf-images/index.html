@@ -28,6 +28,9 @@
     .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .row { grid-template-columns: auto auto 1fr auto; }
     @media (max-width: 560px) { .row { grid-template-columns: auto auto 1fr; } .row .tools { grid-column: 3; } }
+    #i-done { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+    #i-done[hidden] { display: none; }
+    #i-done .done-btns { display: inline-flex; gap: 6px; }
   </style>
 </head>
 <body>

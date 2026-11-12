@@ -187,3 +187,20 @@ input[type="color"] { width: 40px; height: 32px; padding: 0; border: 1px solid v
   .actions .btn { flex: 1; }
   .actions .spacer { display: none; }
 }
+
+/* ── 全尺寸檢視視窗（Kit.viewer） ── */
+.checker { background: repeating-conic-gradient(var(--canvas-soft-2) 0 25%, var(--canvas) 0 50%) 50% / 16px 16px; }
+.zoomable { cursor: zoom-in; }
+.kv { width: min(96vw, 1400px); max-width: none; height: min(92vh, 1000px); max-height: none; padding: 0; border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--canvas); color: var(--ink); }
+.kv::backdrop { background: rgba(0,0,0,.6); }
+.kv[open] { display: flex; flex-direction: column; }
+.kv-bar { display: flex; align-items: center; gap: var(--s-sm); padding: 10px var(--s-md); border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+.kv-bar .kv-title { font-weight: 500; font-size: 14px; word-break: break-all; }
+.kv-bar .kv-cap { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+.kv-bar .kv-btns { margin-left: auto; display: inline-flex; gap: 6px; }
+.kv-body { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; padding: var(--s-md); }
+.kv-body img { max-width: 100%; max-height: 100%; cursor: zoom-in; display: block; }
+.kv-body.is-actual { place-items: start; }
+.kv-body.is-actual img { max-width: none; max-height: none; cursor: zoom-out; }
+.kv-body.is-pdf { padding: 0; place-items: stretch; }
+.kv-body iframe { width: 100%; height: 100%; border: 0; background: #fff; }

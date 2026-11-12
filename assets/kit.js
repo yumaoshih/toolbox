@@ -10,6 +10,7 @@
  *   Kit.progress(barEl, pctEl) -> { set(ratio), busy(), done() }
  *   Kit.showNote(el, msg) / hideNote(el)
  *   Kit.loadScript(url) -> Promise   依需求延遲載入大型函式庫
+ *   Kit.viewer.open({ title, cap, url, kind:'image'|'pdf', onDownload, ownUrl })  全尺寸檢視；ownUrl=true 時關閉後自動 revoke
  */
 (function (root) {
   'use strict';
@@ -103,9 +104,62 @@
     return scriptCache[url];
   }
 
+
+  /* ── 全尺寸檢視視窗：第一次使用時才建立 ── */
+  var viewer = (function () {
+    var dlg = null, ownedUrl = null;
+    function build() {
+      dlg = document.createElement('dialog');
+      dlg.className = 'kv';
+      dlg.setAttribute('aria-label', '檢視');
+      dlg.innerHTML = '<div class="kv-bar"><span class="kv-title"></span><span class="kv-cap"></span>' +
+        '<span class="kv-btns"><button type="button" class="btn btn-sm" data-act="fit">實際尺寸</button>' +
+        '<button type="button" class="btn btn-sm" data-act="dl">下載</button>' +
+        '<button type="button" class="btn btn-sm" data-act="close">關閉</button></span></div><div class="kv-body checker"></div>';
+      document.body.appendChild(dlg);
+      dlg.addEventListener('click', function (e) {
+        if (e.target === dlg) return dlg.close();
+        var act = e.target.closest('[data-act]');
+        if (e.target.tagName === 'IMG' || (act && act.dataset.act === 'fit')) return toggleActual();
+        if (act && act.dataset.act === 'close') dlg.close();
+        if (act && act.dataset.act === 'dl' && dlg._onDownload) dlg._onDownload();
+      });
+      dlg.addEventListener('close', function () {
+        dlg.querySelector('.kv-body').innerHTML = '';
+        if (ownedUrl) { URL.revokeObjectURL(ownedUrl); ownedUrl = null; }
+      });
+    }
+    function toggleActual() {
+      var body = dlg.querySelector('.kv-body');
+      if (body.classList.contains('is-pdf')) return;
+      var on = body.classList.toggle('is-actual');
+      dlg.querySelector('[data-act="fit"]').textContent = on ? '符合視窗' : '實際尺寸';
+    }
+    function open(v) {
+      if (!dlg) build();
+      if (dlg.open) dlg.close();
+      ownedUrl = v.ownUrl ? v.url : null;
+      var isPdf = v.kind === 'pdf';
+      dlg.querySelector('.kv-title').textContent = v.title || '';
+      dlg.querySelector('.kv-cap').textContent = v.cap || '';
+      var body = dlg.querySelector('.kv-body');
+      body.className = 'kv-body ' + (isPdf ? 'is-pdf' : 'checker');
+      var media = document.createElement(isPdf ? 'iframe' : 'img');
+      media.src = v.url;
+      if (isPdf) media.title = v.title || 'PDF 預覽'; else media.alt = v.title || '';
+      body.appendChild(media);
+      var fit = dlg.querySelector('[data-act="fit"]');
+      fit.hidden = isPdf; fit.textContent = '實際尺寸';
+      dlg._onDownload = v.onDownload || null;
+      dlg.querySelector('[data-act="dl"]').hidden = !v.onDownload;
+      dlg.showModal();
+    }
+    return { open: open };
+  })();
+
   root.Kit = {
     $: $, fmtBytes: fmtBytes, fmtDur: fmtDur, escapeHtml: escapeHtml, baseName: baseName, extOf: extOf,
     dropzone: dropzone, download: download, downloadZip: downloadZip, progress: progress,
-    showNote: showNote, hideNote: hideNote, loadScript: loadScript
+    showNote: showNote, hideNote: hideNote, loadScript: loadScript, viewer: viewer
   };
 })(self);

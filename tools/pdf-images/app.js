@@ -124,10 +124,13 @@
   function addThumb(r) {
     var li = document.createElement('li');
     li.className = 'thumb-card';
-    li.innerHTML = '<div class="pic"><img alt="第 ' + r.page + ' 頁" src="' + r.url + '"></div>' +
+    li.innerHTML = '<div class="pic"><img class="zoomable" title="點擊放大" alt="第 ' + r.page + ' 頁" src="' + r.url + '"></div>' +
       '<div class="cap"><span>P' + r.page + ' · ' + Kit.escapeHtml(Kit.fmtBytes(r.blob.size)) + '</span>' +
       '<button type="button" class="btn">下載</button></div>';
     li.querySelector('button').addEventListener('click', function () { Kit.download(r.blob, r.name); });
+    li.querySelector('img').addEventListener('click', function (e) {
+      Kit.viewer.open({ title: '第 ' + r.page + ' 頁', cap: e.target.naturalWidth + '×' + e.target.naturalHeight + ' · ' + Kit.fmtBytes(r.blob.size), url: r.url, onDownload: function () { Kit.download(r.blob, r.name); } });
+    });
     $('p-thumbs').appendChild(li);
   }
 
@@ -214,7 +217,7 @@
       var li = document.createElement('li');
       li.className = 'row'; li.draggable = true; li.dataset.id = it.id;
       li.innerHTML = '<span class="handle" title="拖曳調整順序">' + String(i + 1).padStart(2, '0') + '</span>' +
-        '<img class="thumb" alt="" src="' + it.url + '">' +
+        '<img class="thumb zoomable" title="點擊放大" alt="" src="' + it.url + '">' +
         '<span><div class="r-name">' + Kit.escapeHtml(it.file.name) + '</div><div class="r-meta">' + Kit.fmtBytes(it.file.size) + '</div></span>' +
         '<span class="tools">' +
         '<button type="button" class="icon-btn" data-act="up" aria-label="上移"' + (i === 0 ? ' disabled' : '') + '>' + ICON_UP + '</button>' +
@@ -235,6 +238,10 @@
   }
 
   $('i-rows').addEventListener('click', function (e) {
+    if (e.target.classList.contains('thumb')) {
+      var it = I.items[indexOfId(+e.target.closest('.row').dataset.id)];
+      return Kit.viewer.open({ title: it.file.name, cap: Kit.fmtBytes(it.file.size), url: it.url });
+    }
     var b = e.target.closest('[data-act]'); if (!b || I.busy) return;
     var idx = indexOfId(+b.closest('.row').dataset.id);
     if (b.dataset.act === 'up') move(idx, idx - 1);
@@ -357,12 +364,26 @@
       var name = (items.length === 1 ? Kit.baseName(items[0].file.name) : '合併圖片') + '.pdf';
       Kit.download(blob, name);
       I.prog.done(); $('i-label').textContent = '完成';
-      Kit.showNote($('i-done'), '已下載「' + name + '」：' + items.length + ' 頁，' + Kit.fmtBytes(blob.size) + '。');
-      $('i-done').hidden = false;
+      showPdfDone(blob, name, items.length);
     }).catch(function (err) {
       $('i-label').textContent = '產生失敗';
       Kit.showNote($('i-error'), '產生 PDF 時發生錯誤：' + errMsg(err));
     }).then(function () { setBusyI(false); });
+  }
+
+  /** 完成訊息附「預覽 PDF」與「再次下載」 */
+  function showPdfDone(blob, name, pages) {
+    if (I.pdfUrl) URL.revokeObjectURL(I.pdfUrl);
+    I.pdfUrl = URL.createObjectURL(blob);
+    var note = $('i-done');
+    note.innerHTML = '<span>已下載「' + Kit.escapeHtml(name) + '」：' + pages + ' 頁，' + Kit.fmtBytes(blob.size) + '。</span>' +
+      '<span class="done-btns"><button type="button" class="btn btn-sm" data-act="view">預覽 PDF</button>' +
+      '<button type="button" class="btn btn-sm" data-act="dl">再次下載</button></span>';
+    note.querySelector('[data-act="view"]').addEventListener('click', function () {
+      Kit.viewer.open({ title: name, cap: pages + ' 頁 · ' + Kit.fmtBytes(blob.size), url: I.pdfUrl, kind: 'pdf', onDownload: function () { Kit.download(blob, name); } });
+    });
+    note.querySelector('[data-act="dl"]').addEventListener('click', function () { Kit.download(blob, name); });
+    note.hidden = false;
   }
 
   Kit.dropzone($('i-drop'), $('i-input'), addImages);

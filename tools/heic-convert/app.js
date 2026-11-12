@@ -45,12 +45,15 @@
 
   function addRow(r) {
     var li = document.createElement('li'); li.className = 'row';
-    li.innerHTML = '<img class="thumb" alt="" src="' + r.url + '">' +
+    li.innerHTML = '<img class="thumb zoomable" title="點擊放大" alt="" src="' + r.url + '">' +
       '<span><div class="r-name">' + Kit.escapeHtml(r.name) + '</div><div class="r-meta">' + Kit.fmtBytes(r.inSize) + ' → <b>' + Kit.fmtBytes(r.blob.size) + '</b>' + (r.dims ? ' · ' + r.dims : '') + '</div></span>' +
       '<span class="r-state"><button type="button" class="btn btn-sm">下載</button></span>';
     li.querySelector('button').addEventListener('click', function () { Kit.download(r.blob, r.name); });
     $('rows').appendChild(li);
     var img = li.querySelector('img');
+    img.addEventListener('click', function () {
+      Kit.viewer.open({ title: r.name, cap: (r.dims ? r.dims + ' · ' : '') + Kit.fmtBytes(r.blob.size), url: r.url, onDownload: function () { Kit.download(r.blob, r.name); } });
+    });
     img.addEventListener('load', function () { r.dims = img.naturalWidth + '×' + img.naturalHeight; li.querySelector('.r-meta').insertAdjacentText('beforeend', ' · ' + r.dims); }, { once: true });
   }
 

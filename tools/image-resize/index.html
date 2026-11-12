@@ -12,7 +12,6 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
   <style>
     .num { font-family: var(--font-mono); font-size: 12px; color: var(--mute); min-width: 40px; text-align: right; }
-    .checker { background: repeating-conic-gradient(var(--canvas-soft-2) 0 25%, var(--canvas) 0 50%) 50% / 16px 16px; }
 
     /* 大預覽 */
     .live { margin: var(--s-lg) 0 0; border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; background: var(--canvas); animation: rise var(--dur) var(--ease); }
@@ -31,18 +30,6 @@
     .swatch[aria-pressed="true"] { background: var(--canvas-soft-2); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
     .row .thumb { cursor: zoom-in; }
 
-    /* 全尺寸檢視 */
-    .viewer { width: min(96vw, 1400px); max-width: none; height: min(92vh, 1000px); max-height: none; padding: 0; border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--canvas); color: var(--ink); }
-    .viewer::backdrop { background: rgba(0,0,0,.6); }
-    .viewer[open] { display: flex; flex-direction: column; }
-    .viewer-bar { display: flex; align-items: center; gap: var(--s-sm); padding: 10px var(--s-md); border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
-    .viewer-bar .title { font-weight: 500; font-size: 14px; word-break: break-all; }
-    .viewer-bar .cap { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
-    .viewer-bar .grow { margin-left: auto; display: inline-flex; gap: 6px; }
-    .viewer-body { flex: 1; overflow: auto; display: grid; place-items: center; padding: var(--s-md); }
-    .viewer-body img { max-width: 100%; max-height: 100%; cursor: zoom-in; display: block; }
-    .viewer-body.is-actual { place-items: start; }
-    .viewer-body.is-actual img { max-width: none; max-height: none; cursor: zoom-out; }
   </style>
 </head>
 <body>
@@ -171,18 +158,6 @@
       <ol class="rows" id="rows" hidden></ol>
     </main>
 
-    <dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
-      <div class="viewer-bar">
-        <span class="title" id="viewer-title"></span>
-        <span class="cap" id="viewer-cap"></span>
-        <span class="grow">
-          <button type="button" class="btn btn-sm" id="viewer-fit">實際尺寸</button>
-          <button type="button" class="btn btn-sm" id="viewer-dl" hidden>下載</button>
-          <button type="button" class="btn btn-sm" id="viewer-close">關閉</button>
-        </span>
-      </div>
-      <div class="viewer-body checker" id="viewer-body"><img id="viewer-img" alt=""></div>
-    </dialog>
 
     <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
   </div>
