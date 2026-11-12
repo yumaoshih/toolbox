@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工具集</title>
+  <meta name="description" content="常用小工具的入口：依分類瀏覽或直接搜尋，點卡牌就能使用。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="shell">
+    <header class="top">
+      <a class="wordmark" href="./" aria-label="工具集首頁"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5"/><rect class="cell" x="5" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="5" width="6" height="6" rx="1.5"/><rect class="cell" x="5" y="13" width="6" height="6" rx="1.5"/><rect class="cell" x="13" y="13" width="6" height="6" rx="1.5"/></svg>工具集</a>
+      <span class="count" id="total-count" aria-live="polite"></span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-heading">
+        <h1 id="hero-heading">需要什麼，點一張卡牌就能用</h1>
+        <form class="search" role="search" onsubmit="return false">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search" type="search" placeholder="搜尋工具名稱、用途或關鍵字" autocomplete="off" aria-label="搜尋工具">
+          <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        </form>
+        <div class="cats" id="cats" role="tablist" aria-label="分類"></div>
+      </section>
+
+      <section aria-label="工具清單">
+        <ul class="grid" id="grid"></ul>
+        <div class="empty" id="empty" hidden>
+          <p>找不到符合「<span id="empty-q"></span>」的工具。</p>
+          <button type="button" class="btn" id="btn-clear">清除搜尋</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>所有工具皆在瀏覽器本機執行</span>
+      <a href="https://github.com/yumaoshih/toolbox/blob/main/tools.json" rel="noopener">新增工具：編輯 tools.json</a>
+    </footer>
+  </div>
+
+  <template id="card-tpl">
+    <li class="card">
+      <a class="card-link" target="_blank" rel="noopener">
+        <span class="card-icon" aria-hidden="true"></span>
+        <span class="card-body">
+          <span class="card-head">
+            <span class="card-name"></span>
+            <span class="card-cat"></span>
+          </span>
+          <span class="card-desc"></span>
+          <span class="card-tags"></span>
+        </span>
+        <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      </a>
+    </li>
+  </template>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

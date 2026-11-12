@@ -1,0 +1,100 @@
+{
+  "categories": [
+    { "id": "media",  "name": "媒體工具" },
+    { "id": "class",  "name": "課堂活動" },
+    { "id": "life",   "name": "日常生活" },
+    { "id": "family", "name": "親子家庭" }
+  ],
+  "tools": [
+    {
+      "id": "video-splitter",
+      "name": "影片切割",
+      "desc": "把大影片切成指定大小的 MP4，不上傳、不重新編碼，幾秒完成。",
+      "category": "media",
+      "tags": ["影片", "MP4", "MOV", "分割", "上傳限制"],
+      "url": "https://yumaoshih.github.io/video-splitter/",
+      "icon": "🎬"
+    },
+    {
+      "id": "image-compressor",
+      "name": "圖片瘦身站",
+      "desc": "批次圖片轉檔與壓縮，全部在瀏覽器本機處理，不會上傳。",
+      "category": "media",
+      "tags": ["圖片", "壓縮", "轉檔", "WebP", "JPG", "PNG"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/004_image-compressor/",
+      "icon": "🖼️"
+    },
+    {
+      "id": "bingo-generator",
+      "name": "一起賓果",
+      "desc": "聚會破冰、課堂活動用的多人賓果，開一局或加入遊戲，不用註冊。",
+      "category": "class",
+      "tags": ["賓果", "破冰", "聚會", "多人"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/005_bingo-generator/",
+      "icon": "🎱"
+    },
+    {
+      "id": "group-randomizer",
+      "name": "一鍵分組器",
+      "desc": "貼上名單，選分幾組或每組幾人，產生公平的隨機分組。",
+      "category": "class",
+      "tags": ["分組", "隨機", "名單", "課堂"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/009_group-randomizer/",
+      "icon": "🎲"
+    },
+    {
+      "id": "vocabulary-trainer",
+      "name": "Word Lab 單字遊戲",
+      "desc": "四選一快答練高頻英文單字，收錄 NGSL、NAWL、TSL 近五千字。",
+      "category": "class",
+      "tags": ["英文", "單字", "測驗", "學習"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/006_vocabulary-trainer/",
+      "icon": "🔤"
+    },
+    {
+      "id": "fasting-clock",
+      "name": "斷食小日子",
+      "desc": "手機式斷食計時與計畫，16–8、18–6 等方案，資料留在本機。",
+      "category": "life",
+      "tags": ["斷食", "計時", "健康"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/001_fasting-clock/",
+      "icon": "⏱️"
+    },
+    {
+      "id": "water-tracker",
+      "name": "補水夥伴",
+      "desc": "每日補水追蹤，不同飲品分層顯示，達標會解鎖角色全彩。",
+      "category": "life",
+      "tags": ["喝水", "健康", "追蹤"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/002_water-tracker/",
+      "icon": "💧"
+    },
+    {
+      "id": "food-wheel",
+      "name": "今天吃什麼",
+      "desc": "美食輪盤，選不出來就轉一下，可自訂選項。",
+      "category": "life",
+      "tags": ["美食", "輪盤", "抽選", "午餐"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/003_food-wheel/",
+      "icon": "🍜"
+    },
+    {
+      "id": "travel-guide",
+      "name": "翻頁旅行手冊",
+      "desc": "可翻頁的臺南旅行手冊，旁邊同步顯示每頁的圖片生成提示詞。",
+      "category": "life",
+      "tags": ["旅行", "臺南", "手冊", "提示詞"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/007_travel-guide/",
+      "icon": "📖"
+    },
+    {
+      "id": "kids-reward-board",
+      "name": "小小集點王",
+      "desc": "設定孩子名稱與獎勵清單，用積分鼓勵日常好行為。",
+      "category": "family",
+      "tags": ["孩子", "積分", "獎勵", "教養"],
+      "url": "https://yumaoshih.github.io/ai-workshop-starters/008_kids-reward-board/",
+      "icon": "⭐"
+    }
+  ]
+}
