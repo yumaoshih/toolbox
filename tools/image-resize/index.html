@@ -11,18 +11,38 @@
   <link rel="stylesheet" href="../../assets/base.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Crect x='5' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='5' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='5' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
   <style>
-    .layout { display: grid; gap: var(--s-lg); }
-    .layout.has-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 300px); align-items: start; }
-    .layout .settings { margin-top: var(--s-md); }
     .num { font-family: var(--font-mono); font-size: 12px; color: var(--mute); min-width: 40px; text-align: right; }
-    .live { margin: var(--s-md) 0 0; position: sticky; top: 16px; }
-    .live canvas { width: 100%; height: auto; display: block; border: 1px solid var(--hairline); border-radius: var(--r-md); background:
-      repeating-conic-gradient(var(--canvas-soft-2) 0 25%, var(--canvas) 0 50%) 50% / 16px 16px; }
-    .live figcaption { margin-top: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .checker { background: repeating-conic-gradient(var(--canvas-soft-2) 0 25%, var(--canvas) 0 50%) 50% / 16px 16px; }
+
+    /* 大預覽 */
+    .live { margin: var(--s-lg) 0 0; border: 1px solid var(--hairline); border-radius: var(--r-lg); overflow: hidden; background: var(--canvas); animation: rise var(--dur) var(--ease); }
+    .live-bar { display: flex; align-items: center; gap: var(--s-sm); flex-wrap: wrap; padding: 10px var(--s-md); border-bottom: 1px solid var(--hairline); }
+    .live-bar .tag { font-size: 12px; font-weight: 500; padding: 0 8px; line-height: 22px; border-radius: var(--r-pill); background: var(--canvas-soft-2); color: var(--body); }
+    .live-bar .cap { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .live-bar .nav { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .stage { display: grid; place-items: center; padding: var(--s-md); min-height: 220px; cursor: zoom-in; }
+    .stage canvas { max-width: 100%; max-height: min(56vh, 520px); width: auto; height: auto; display: block; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .stage-hint { text-align: center; font-size: 12px; color: var(--mute); padding: 0 0 10px; }
+
     .swatch { width: 32px; padding: 0; display: grid; place-items: center; }
     .swatch i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--hairline-strong); display: block; }
-    .swatch[aria-pressed="true"] { background: var(--canvas-soft-2); box-shadow: inset 0 0 0 1px var(--ink); }
-    @media (max-width: 760px) { .layout.has-preview { grid-template-columns: 1fr; } .live { position: static; order: -1; } }
+    .swatch.auto { width: auto; padding: 0 10px; gap: 6px; display: inline-flex; }
+    .swatch.auto i { background: #fff; box-shadow: inset 0 0 0 3px #222; }
+    .swatch[aria-pressed="true"] { background: var(--canvas-soft-2); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+    .row .thumb { cursor: zoom-in; }
+
+    /* 全尺寸檢視 */
+    .viewer { width: min(96vw, 1400px); max-width: none; height: min(92vh, 1000px); max-height: none; padding: 0; border: 1px solid var(--hairline); border-radius: var(--r-lg); background: var(--canvas); color: var(--ink); }
+    .viewer::backdrop { background: rgba(0,0,0,.6); }
+    .viewer[open] { display: flex; flex-direction: column; }
+    .viewer-bar { display: flex; align-items: center; gap: var(--s-sm); padding: 10px var(--s-md); border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
+    .viewer-bar .title { font-weight: 500; font-size: 14px; word-break: break-all; }
+    .viewer-bar .cap { font-family: var(--font-mono); font-size: 12px; color: var(--mute); }
+    .viewer-bar .grow { margin-left: auto; display: inline-flex; gap: 6px; }
+    .viewer-body { flex: 1; overflow: auto; display: grid; place-items: center; padding: var(--s-md); }
+    .viewer-body img { max-width: 100%; max-height: 100%; cursor: zoom-in; display: block; }
+    .viewer-body.is-actual { place-items: start; }
+    .viewer-body.is-actual img { max-width: none; max-height: none; cursor: zoom-out; }
   </style>
 </head>
 <body>
@@ -53,7 +73,21 @@
         </div>
       </div>
 
-      <div class="layout">
+      <figure class="live" id="live" hidden>
+        <div class="live-bar">
+          <span class="tag">預覽</span>
+          <span class="cap" id="preview-cap"></span>
+          <span class="nav" id="preview-nav" hidden>
+            <button type="button" class="btn btn-sm" id="prev" aria-label="上一張">‹</button>
+            <span id="preview-idx"></span>
+            <button type="button" class="btn btn-sm" id="next" aria-label="下一張">›</button>
+          </span>
+          <button type="button" class="btn btn-sm" id="btn-zoom">放大檢視</button>
+        </div>
+        <div class="stage checker" id="stage" title="點擊放大檢視"><canvas id="preview" aria-label="處理後的預覽"></canvas></div>
+        <figcaption class="stage-hint">調整下方設定時即時更新 · 點圖片可看實際尺寸</figcaption>
+      </figure>
+
         <div class="settings">
           <div class="setting">
             <span class="title">調整方式<small>比目標小的圖片不會被放大</small></span>
@@ -101,30 +135,25 @@
             </div>
             <div class="setting">
               <label class="title" for="wm-size">大小</label>
-              <input id="wm-size" type="range" min="2" max="15" step="0.5" value="4">
-              <span class="num" id="wm-size-val">4%</span>
+              <input id="wm-size" type="range" min="2" max="20" step="0.5" value="5">
+              <span class="num" id="wm-size-val">5%</span>
             </div>
             <div class="setting">
               <label class="title" for="wm-alpha">透明度</label>
-              <input id="wm-alpha" type="range" min="10" max="100" step="5" value="60">
-              <span class="num" id="wm-alpha-val">60%</span>
+              <input id="wm-alpha" type="range" min="10" max="100" step="5" value="70">
+              <span class="num" id="wm-alpha-val">70%</span>
             </div>
             <div class="setting">
               <label class="title" for="wm-color">顏色</label>
               <div class="seg-ctl" role="group" aria-label="快速顏色" id="wm-swatch">
-                <button type="button" class="chip swatch" data-v="#ffffff" aria-pressed="true" aria-label="白色"><i style="background:#fff"></i></button>
+                <button type="button" class="chip swatch auto" data-v="auto" aria-pressed="true"><i></i>自動</button>
+                <button type="button" class="chip swatch" data-v="#ffffff" aria-pressed="false" aria-label="白色"><i style="background:#fff"></i></button>
                 <button type="button" class="chip swatch" data-v="#000000" aria-pressed="false" aria-label="黑色"><i style="background:#000"></i></button>
               </div>
               <input id="wm-color" type="color" value="#ffffff" aria-label="自訂顏色">
             </div>
           </div>
         </div>
-
-        <figure class="live" id="live" hidden>
-          <canvas id="preview" aria-label="第一張圖片的處理預覽"></canvas>
-          <figcaption id="preview-cap"></figcaption>
-        </figure>
-      </div>
 
       <div class="actions">
         <button type="button" class="btn btn-primary" id="btn-start" disabled>開始處理</button>
@@ -141,6 +170,19 @@
 
       <ol class="rows" id="rows" hidden></ol>
     </main>
+
+    <dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+      <div class="viewer-bar">
+        <span class="title" id="viewer-title"></span>
+        <span class="cap" id="viewer-cap"></span>
+        <span class="grow">
+          <button type="button" class="btn btn-sm" id="viewer-fit">實際尺寸</button>
+          <button type="button" class="btn btn-sm" id="viewer-dl" hidden>下載</button>
+          <button type="button" class="btn btn-sm" id="viewer-close">關閉</button>
+        </span>
+      </div>
+      <div class="viewer-body checker" id="viewer-body"><img id="viewer-img" alt=""></div>
+    </dialog>
 
     <footer class="foot">建議使用電腦版 Chrome、Edge 或 Firefox</footer>
   </div>

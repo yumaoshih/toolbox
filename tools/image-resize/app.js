@@ -19,13 +19,13 @@
     return { get: get, set: set, setDisabled: function (d) { el.querySelectorAll('.chip').forEach(function (c) { c.disabled = d; }); } };
   }
 
-  var state = { files: [], results: [], busy: false, firstBmp: null, previewQueued: false };
+  var state = { files: [], results: [], busy: false, previewBmp: null, previewIdx: 0, previewQueued: false, viewerUrl: null };
   var prog = Kit.progress($('bar'), $('status-pct'));
   var ui = {
     mode: chipGroup($('mode'), onModeChange),
     fmt: chipGroup($('fmt'), onFmtChange),
     pos: chipGroup($('wm-pos'), schedulePreview),
-    swatch: chipGroup($('wm-swatch'), function (v) { $('wm-color').value = v; schedulePreview(); })
+    swatch: chipGroup($('wm-swatch'), function (v) { if (v !== 'auto') $('wm-color').value = v; schedulePreview(); })
   };
 
   /* ── 讀設定 ── */
@@ -38,7 +38,7 @@
       valid: valid, mode: mode, size: size, fmt: ui.fmt.get(), quality: +$('quality').value / 100,
       wm: $('wm-on').checked && $('wm-text').value.trim() ? {
         text: $('wm-text').value.trim(), pos: ui.pos.get(), size: +$('wm-size').value / 100,
-        alpha: +$('wm-alpha').value / 100, color: $('wm-color').value
+        alpha: +$('wm-alpha').value / 100, color: ui.swatch.get() === 'auto' ? 'auto' : $('wm-color').value
       } : null
     };
   }
@@ -66,26 +66,32 @@
     return ((n >> 16 & 255) * 0.299 + (n >> 8 & 255) * 0.587 + (n & 255) * 0.114) > 150;
   }
 
+  /** 字級以圖片面積的平方根為基準，寬扁或細長的圖也不會變得太小 */
+  function wmFontPx(w, h, wm) { return Math.max(12, Math.round(Math.sqrt(w * h) * wm.size)); }
+
   function drawWatermark(ctx, w, h, wm) {
-    var px = Math.max(8, Math.round(Math.min(w, h) * wm.size));
+    var px = wmFontPx(w, h, wm);
+    var fill = wm.color === 'auto' ? '#ffffff' : wm.color;
+    var outline = isLight(fill) ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
     ctx.save();
     ctx.font = FONT.replace('{px}', px);
-    ctx.fillStyle = wm.color; ctx.globalAlpha = wm.alpha;
-    ctx.shadowColor = isLight(wm.color) ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)'; ctx.shadowBlur = px * 0.12;
+    ctx.globalAlpha = wm.alpha;
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, px * 0.12); ctx.strokeStyle = outline; ctx.fillStyle = fill;
+    var text = function (t, x, y) { ctx.strokeText(t, x, y); ctx.fillText(t, x, y); };
     ctx.textBaseline = 'middle';
     var tw = ctx.measureText(wm.text).width, m = px * 0.9;
     if (wm.pos === 'tile') {
       ctx.translate(w / 2, h / 2); ctx.rotate(-Math.PI / 6); ctx.textAlign = 'center';
       var stepX = tw + px * 3, stepY = px * 4, R = Math.hypot(w, h) / 2 + stepX;
       for (var y = -R, row = 0; y <= R; y += stepY, row++) {
-        for (var x = -R + (row % 2) * stepX / 2; x <= R; x += stepX) ctx.fillText(wm.text, x, y);
+        for (var x = -R + (row % 2) * stepX / 2; x <= R; x += stepX) text(wm.text, x, y);
       }
     } else {
       var right = wm.pos === 'tr' || wm.pos === 'br', bottom = wm.pos === 'bl' || wm.pos === 'br';
       ctx.textAlign = wm.pos === 'c' ? 'center' : (right ? 'right' : 'left');
       var x0 = wm.pos === 'c' ? w / 2 : (right ? w - m : m);
       var y0 = wm.pos === 'c' ? h / 2 : (bottom ? h - m - px / 2 : m + px / 2);
-      ctx.fillText(wm.text, x0, y0);
+      text(wm.text, x0, y0);
     }
     ctx.restore();
   }
@@ -118,12 +124,53 @@
     requestAnimationFrame(function () { state.previewQueued = false; drawPreview(); });
   }
   function drawPreview() {
-    var o = readOpts();
-    if (!state.firstBmp || !o.valid) return;
-    var mime = outMime(state.files[0], o);
-    render(state.firstBmp, o, mime, $('preview'));
-    var t = targetSize(state.firstBmp.width, state.firstBmp.height, o);
-    $('preview-cap').textContent = state.firstBmp.width + '×' + state.firstBmp.height + ' → ' + t.w + '×' + t.h + ' · ' + EXT_OF_MIME[mime].toUpperCase();
+    var o = readOpts(), bmp = state.previewBmp;
+    if (!bmp || !o.valid) return;
+    var mime = outMime(state.files[state.previewIdx], o);
+    render(bmp, o, mime, $('preview'));
+    var t = targetSize(bmp.width, bmp.height, o);
+    $('preview-cap').textContent = bmp.width + '×' + bmp.height + ' → ' + t.w + '×' + t.h + ' · ' + EXT_OF_MIME[mime].toUpperCase();
+  }
+
+  function showPreview(idx) {
+    var n = state.files.length;
+    state.previewIdx = (idx + n) % n;
+    var file = state.files[state.previewIdx];
+    $('preview-idx').textContent = (state.previewIdx + 1) + ' / ' + n;
+    $('preview-nav').hidden = n < 2;
+    return decode(file).then(function (bmp) {
+      if (state.files[state.previewIdx] !== file) { bmp.close(); return; }
+      if (state.previewBmp) state.previewBmp.close();
+      state.previewBmp = bmp;
+      $('live').hidden = false;
+      drawPreview();
+    }).catch(function (err) { Kit.showNote($('note-error'), file.name + '：' + err.message); });
+  }
+
+  /* ── 全尺寸檢視 ── */
+  function openViewer(v) {
+    closeViewerUrl();
+    state.viewerUrl = v.ownUrl ? v.url : null;
+    $('viewer-title').textContent = v.title;
+    $('viewer-cap').textContent = v.cap;
+    $('viewer-img').src = v.url;
+    $('viewer-body').classList.remove('is-actual');
+    $('viewer-fit').textContent = '實際尺寸';
+    $('viewer-dl').hidden = !v.onDownload;
+    $('viewer-dl').onclick = v.onDownload || null;
+    $('viewer').showModal();
+  }
+  function closeViewerUrl() { if (state.viewerUrl) { URL.revokeObjectURL(state.viewerUrl); state.viewerUrl = null; } }
+  function toggleActual() {
+    var on = $('viewer-body').classList.toggle('is-actual');
+    $('viewer-fit').textContent = on ? '符合視窗' : '實際尺寸';
+  }
+  function zoomPreview() {
+    if (!state.previewBmp) return;
+    $('preview').toBlob(function (b) {
+      if (!b) return;
+      openViewer({ title: '預覽：' + state.files[state.previewIdx].name, cap: $('preview-cap').textContent, url: URL.createObjectURL(b), ownUrl: true });
+    }, 'image/png');
   }
 
   /* ── 選檔 ── */
@@ -137,12 +184,7 @@
     $('picked-meta').textContent = Kit.fmtBytes(total);
     $('picked').hidden = false; $('drop').hidden = true;
     $('btn-start').disabled = false;
-    if (state.firstBmp) { state.firstBmp.close(); state.firstBmp = null; }
-    decode(state.files[0]).then(function (bmp) {
-      state.firstBmp = bmp;
-      $('live').hidden = false; document.querySelector('.layout').classList.add('has-preview');
-      drawPreview();
-    }).catch(function (err) { Kit.showNote($('note-error'), state.files[0].name + '：' + err.message); });
+    showPreview(0);
   }
 
   function clearResults() {
@@ -163,12 +205,15 @@
     li.className = 'row';
     var saved = r.inSize > 0 ? Math.round((1 - r.blob.size / r.inSize) * 100) : 0;
     var cls = saved >= 0 ? 'good' : 'warn';
-    li.innerHTML = '<img class="thumb" alt="" src="' + r.url + '">' +
+    li.innerHTML = '<img class="thumb" alt="點擊放大" title="點擊放大" src="' + r.url + '">' +
       '<span><div class="r-name">' + Kit.escapeHtml(r.name) + '</div>' +
       '<div class="r-meta">' + r.from + ' → <b>' + r.to + '</b> · ' + Kit.fmtBytes(r.inSize) + ' → <b>' + Kit.fmtBytes(r.blob.size) + '</b> ' +
       '<span class="' + cls + '">' + (saved >= 0 ? '−' + saved : '+' + (-saved)) + '%</span></div></span>' +
       '<span class="r-state"><button type="button" class="btn btn-sm">下載</button></span>';
     li.querySelector('button').addEventListener('click', function () { Kit.download(r.blob, r.name); });
+    li.querySelector('.thumb').addEventListener('click', function () {
+      openViewer({ title: r.name, cap: r.to + ' · ' + Kit.fmtBytes(r.blob.size), url: r.url, onDownload: function () { Kit.download(r.blob, r.name); } });
+    });
     $('rows').appendChild(li);
   }
 
@@ -250,6 +295,15 @@
   $('wm-size').addEventListener('input', function () { $('wm-size-val').textContent = $('wm-size').value + '%'; schedulePreview(); });
   $('wm-alpha').addEventListener('input', function () { $('wm-alpha-val').textContent = $('wm-alpha').value + '%'; schedulePreview(); });
   $('wm-color').addEventListener('input', function () { ui.swatch.set($('wm-color').value); schedulePreview(); });
+  $('prev').addEventListener('click', function () { showPreview(state.previewIdx - 1); });
+  $('next').addEventListener('click', function () { showPreview(state.previewIdx + 1); });
+  $('stage').addEventListener('click', zoomPreview);
+  $('btn-zoom').addEventListener('click', zoomPreview);
+  $('viewer-fit').addEventListener('click', toggleActual);
+  $('viewer-img').addEventListener('click', toggleActual);
+  $('viewer-close').addEventListener('click', function () { $('viewer').close(); });
+  $('viewer').addEventListener('close', closeViewerUrl);
+  $('viewer').addEventListener('click', function (e) { if (e.target === $('viewer')) $('viewer').close(); });
 
   window.__imageResize = { state: state, pickFiles: pickFiles, run: run, readOpts: readOpts };
 })();
